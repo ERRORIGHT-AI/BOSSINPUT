@@ -66,11 +66,19 @@
     "microphone": "麦克风",
     "selectMicrophone": "输入设备",
     "selectMicrophoneDescription": "选择用于语音输入的麦克风",
-    "noDevicesFound": "未找到音频输入设备",
+    "noDevicesFound": "未找到音频输入设备，请授予麦克风权限。",
+    "requestPermission": "授权麦克风访问",
+    "openPrivacySettings": "打开系统设置",
+    "permissionGranted": "麦克风访问已授权",
+    "permissionDenied": "麦克风访问被拒绝 — 请在系统设置中启用",
     "micLevel": "音频电平：{{level}}%",
     "deviceDefault": "（系统默认）",
-    "testRecording": "测试录音",
-    "testDescription": "按语音键或点击此处测试",
+    "testMicLevel": "测试麦克风电平",
+    "testRecording": "开始测试录音",
+    "stopRecording": "停止并转录",
+    "transcribing": "正在转录...",
+    "transcriptionResult": "转录结果：",
+    "testRecordingDescription": "点击开始录音，说话后再次点击停止并转录",
     "pasteMethod": "粘贴方式",
     "pasteMethods": {
       "clipboard": "剪贴板",
@@ -118,7 +126,9 @@
       "autoDetect": "自动检测",
       "cpuOptimized": "CPU 优化",
       "gpuRequired": "需要 GPU",
-      "multiLanguage": "多语言"
+      "multiLanguage": "多语言",
+      "cjkOptimized": "中日韩优化",
+      "itn": "逆文本正则化"
     },
     "speed": "x{{speed}} 实时",
     "lastUsed": "最后使用于 {{time}}",
@@ -138,7 +148,7 @@
       "processing": "处理中",
       "error": "错误"
     },
-    "shortcut": "F13: 语音",
+    "shortcut": "Fn+Space: 语音",
     "keyboard": "键盘",
     "keyboardConnected": "已连接",
     "keyboardDisconnected": "未连接"

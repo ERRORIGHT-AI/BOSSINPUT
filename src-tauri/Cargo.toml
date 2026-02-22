@@ -28,7 +28,7 @@ rubato = "0.16.2"
 log = "0.4.25"
 # Pin ort to rc.10 which is compatible with transcribe-rs 0.2.5
 ort = "=2.0.0-rc.10"
-transcribe-rs = { version = "0.2.5", features = ["parakeet"] }
+transcribe-rs = { version = "0.2.5", features = ["parakeet", "sense_voice"] }
 
 # Global hotkey & injection
 rdev = "0.5"

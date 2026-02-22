@@ -41,25 +41,28 @@ pub struct AppState {
     clipboard: Mutex<ClipboardManager>,
 }
 
+impl AppState {
+    /// Lock audio mutex, recovering from poison if a previous operation panicked
+    fn audio(&self) -> std::sync::MutexGuard<'_, AudioManager> {
+        self.audio.lock().unwrap_or_else(|e| {
+            tracing::warn!("Audio mutex was poisoned, recovering");
+            e.into_inner()
+        })
+    }
+}
+
 // Voice Commands
 
 #[tauri::command]
 async fn voice_start_recording(state: tauri::State<'_, AppState>) -> Result<(), String> {
-    state.audio
-        .lock()
-        .map_err(|e| format!("Audio lock error: {}", e))?
-        .start_recording()
+    state.audio().start_recording()
 }
 
 #[tauri::command]
 async fn voice_stop_recording(
     state: tauri::State<'_, AppState>,
 ) -> Result<TranscriptionResult, String> {
-    let audio_data = state
-        .audio
-        .lock()
-        .map_err(|e| format!("Audio lock error: {}", e))?
-        .stop_recording()?;
+    let audio_data = state.audio().stop_recording()?;
 
     state
         .stt
@@ -70,21 +73,13 @@ async fn voice_stop_recording(
 
 #[tauri::command]
 async fn voice_test_microphone(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
-    let result = state
-        .audio
-        .lock()
-        .map_err(|e| format!("Audio lock error: {}", e))?
-        .test_microphone()?;
+    let result = state.audio().test_microphone()?;
     Ok(result)
 }
 
 #[tauri::command]
 async fn voice_get_status(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
-    let is_recording = state
-        .audio
-        .lock()
-        .map_err(|e| format!("Audio lock error: {}", e))?
-        .is_recording();
+    let is_recording = state.audio().is_recording();
     let model_loaded = state
         .stt
         .lock()
@@ -142,27 +137,27 @@ async fn keyboard_list_devices(
 
 #[tauri::command]
 async fn model_get_list(state: tauri::State<'_, AppState>) -> Result<Vec<serde_json::Value>, String> {
-    // Check if Parakeet V3 model is available on disk
-    let model_path = "/Users/bobby/Library/Application Support/com.pais.handy/models/parakeet-tdt-0.6b-v3-int8";
-    let model_exists = std::path::Path::new(model_path).exists();
-
-    // Check if STT engine has model loaded
-    let is_loaded = state
+    // Check which engine is currently loaded
+    let stt = state
         .stt
         .lock()
-        .map_err(|e| format!("STT lock error: {}", e))?
-        .is_model_loaded();
+        .map_err(|e| format!("STT lock error: {}", e))?;
+    let is_loaded = stt.is_model_loaded();
+    let active_id = stt.active_model_id();
+    drop(stt);
 
-    // Determine parakeet-v3 status using frontend-expected values
-    let parakeet_status = if is_loaded {
-        "active"
-    } else if model_exists {
-        "downloaded"
-    } else {
-        "not-downloaded"
+    // Helper: determine status for a model
+    let status_for = |model_id: &str| -> &str {
+        let downloaded = stt::SttEngine::is_model_downloaded(model_id);
+        if is_loaded && active_id == model_id {
+            "active"
+        } else if downloaded {
+            "downloaded"
+        } else {
+            "not-downloaded"
+        }
     };
 
-    // Return all 3 models matching AVAILABLE_MODELS in frontend constants
     Ok(vec![
         serde_json::json!({
             "id": "parakeet-v3-cpu",
@@ -172,29 +167,18 @@ async fn model_get_list(state: tauri::State<'_, AppState>) -> Result<Vec<serde_j
             "languages": ["auto", "en", "zh-CN", "zh-TW", "ja", "ko"],
             "speed": 5,
             "features": ["Auto-detect", "CPU Optimized", "x5 Realtime"],
-            "status": parakeet_status,
+            "status": status_for("parakeet-v3-cpu"),
             "downloadProgress": 0
         }),
         serde_json::json!({
-            "id": "parakeet-v2-cpu",
-            "name": "Parakeet V2 (CPU)",
-            "size": 473 * 1024 * 1024,
+            "id": "sense-voice-int8",
+            "name": "SenseVoice (CPU)",
+            "size": 160 * 1024 * 1024,
             "type": "cpu",
-            "languages": ["auto", "en", "zh-CN"],
-            "speed": 4,
-            "features": ["Auto-detect", "CPU Optimized", "x4 Realtime"],
-            "status": "not-downloaded",
-            "downloadProgress": 0
-        }),
-        serde_json::json!({
-            "id": "whisper-small-gpu",
-            "name": "Whisper Small (GPU)",
-            "size": 487 * 1024 * 1024,
-            "type": "gpu",
-            "languages": ["en", "zh-CN", "es", "fr", "de", "ja", "ko"],
+            "languages": ["auto", "zh-CN", "zh-TW", "en", "ja", "ko", "yue"],
             "speed": 10,
-            "features": ["Multi-language", "GPU Required", "x10 Realtime"],
-            "status": "not-downloaded",
+            "features": ["CJK Optimized", "CPU Optimized", "x10 Realtime", "ITN"],
+            "status": status_for("sense-voice-int8"),
             "downloadProgress": 0
         }),
     ])
@@ -207,14 +191,13 @@ async fn model_download(_model_id: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn model_set_active(_model_id: String, state: tauri::State<'_, AppState>) -> Result<(), String> {
+async fn model_set_active(model_id: String, state: tauri::State<'_, AppState>) -> Result<(), String> {
+    tracing::info!("Setting active model to: {}", model_id);
     state
         .stt
         .lock()
         .map_err(|e| format!("STT lock error: {}", e))?
-        .load_model()
-        .map_err(|e| format!("Failed to load model: {}", e))?;
-    Ok(())
+        .load_model_by_id(&model_id)
 }
 
 // Keyboard Additional Commands
@@ -271,7 +254,7 @@ async fn keyboard_reset(state: tauri::State<'_, AppState>) -> Result<(), String>
 async fn voice_get_settings() -> Result<serde_json::Value, String> {
     Ok(serde_json::json!({
         "triggerMode": "toggle",
-        "voiceShortcut": "F13",
+        "voiceShortcut": "Fn+Space",
         "currentModel": "parakeet-v3-cpu",
         "language": "auto",
         "pasteMethod": "clipboard",
@@ -283,10 +266,13 @@ async fn voice_get_settings() -> Result<serde_json::Value, String> {
 // Model Additional Commands
 
 #[tauri::command]
-async fn model_get_active() -> Result<Option<String>, String> {
-    // Always return the default model as the active selection
-    // The model status (loaded/downloaded/not-downloaded) is tracked in model_get_list
-    Ok(Some("parakeet-v3-cpu".to_string()))
+async fn model_get_active(state: tauri::State<'_, AppState>) -> Result<Option<String>, String> {
+    let id = state
+        .stt
+        .lock()
+        .map_err(|e| format!("STT lock error: {}", e))?
+        .active_model_id();
+    Ok(Some(id))
 }
 
 #[tauri::command]
@@ -340,24 +326,90 @@ async fn set_onboarding_complete() -> Result<(), String> {
     Ok(())
 }
 
+// Permission Commands
+
+#[tauri::command]
+async fn request_microphone_permission(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    // Use AVCaptureDevice.requestAccess via Swift to trigger macOS permission dialog.
+    // This is required because cpal/CoreAudio alone does NOT trigger the TCC prompt,
+    // especially for dev/ad-hoc signed builds.
+    #[cfg(target_os = "macos")]
+    {
+        let swift_code = r#"
+import AVFoundation
+import Foundation
+let semaphore = DispatchSemaphore(value: 0)
+var result = false
+AVCaptureDevice.requestAccess(for: .audio) { granted in
+    result = granted
+    semaphore.signal()
+}
+semaphore.wait()
+print(result ? "granted" : "denied")
+"#;
+        let output = std::process::Command::new("swift")
+            .arg("-e")
+            .arg(swift_code)
+            .output()
+            .map_err(|e| format!("Failed to run Swift permission request: {}", e))?;
+
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        tracing::info!("Microphone permission request result: {}", stdout);
+
+        if stdout == "granted" {
+            // Permission granted — refresh device list
+            let devices = state.audio().list_input_devices().unwrap_or_default();
+
+            return Ok(serde_json::json!({
+                "granted": true,
+                "devices": devices,
+            }));
+        } else {
+            return Ok(serde_json::json!({
+                "granted": false,
+                "error": "Microphone access denied. Please enable in System Settings > Privacy & Security > Microphone.",
+            }));
+        }
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        // On non-macOS, try cpal directly
+        let result = state.audio().request_permission();
+        match result {
+            Ok(info) => Ok(info),
+            Err(e) => Ok(serde_json::json!({ "granted": false, "error": e })),
+        }
+    }
+}
+
+#[tauri::command]
+async fn open_privacy_settings(setting_type: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let url = match setting_type.as_str() {
+            "microphone" => "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+            "accessibility" => "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+            _ => return Err(format!("Unknown setting type: {}", setting_type)),
+        };
+        std::process::Command::new("open")
+            .arg(url)
+            .spawn()
+            .map_err(|e| format!("Failed to open system settings: {}", e))?;
+    }
+    Ok(())
+}
+
 // Audio Device Commands
 
 #[tauri::command]
 async fn audio_list_devices(state: tauri::State<'_, AppState>) -> Result<Vec<serde_json::Value>, String> {
-    state
-        .audio
-        .lock()
-        .map_err(|e| format!("Audio lock error: {}", e))?
-        .list_input_devices()
+    state.audio().list_input_devices()
 }
 
 #[tauri::command]
 async fn audio_set_device(device_name: String, state: tauri::State<'_, AppState>) -> Result<(), String> {
-    state
-        .audio
-        .lock()
-        .map_err(|e| format!("Audio lock error: {}", e))?
-        .set_input_device(device_name)
+    state.audio().set_input_device(device_name)
 }
 
 // Clipboard Commands
@@ -432,6 +484,8 @@ pub fn run() {
             model_cancel_download,
             model_get_download_progress,
             model_delete,
+            request_microphone_permission,
+            open_privacy_settings,
             audio_list_devices,
             audio_set_device,
             clipboard_set_text,

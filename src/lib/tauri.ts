@@ -171,6 +171,31 @@ export async function modelAddCustom(filepath: string): Promise<VoiceModel> {
 }
 
 // ============================================================
+// Permission Commands
+// ============================================================
+
+export interface MicPermissionResult {
+  granted: boolean;
+  error?: string;
+  deviceName?: string;
+  devices?: AudioDevice[];
+}
+
+/**
+ * Request microphone permission — triggers macOS permission dialog
+ */
+export async function requestMicrophonePermission(): Promise<MicPermissionResult> {
+  return invoke('request_microphone_permission');
+}
+
+/**
+ * Open macOS Privacy & Security settings for microphone or accessibility
+ */
+export async function openPrivacySettings(type: 'microphone' | 'accessibility'): Promise<void> {
+  return invoke('open_privacy_settings', { settingType: type });
+}
+
+// ============================================================
 // Audio Device Commands
 // ============================================================
 

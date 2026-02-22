@@ -3,7 +3,7 @@ import { useVoiceStore, useModelStore, useUIStore } from '@/stores';
 import { useT } from '@/i18n/hook';
 import { Button, RecordingFloat } from '@/components';
 import { SUPPORTED_LANGUAGES, TRIGGER_MODES } from '@/lib/constants';
-import { audioListDevices, audioSetDevice } from '@/lib/tauri';
+import { audioListDevices, audioSetDevice, requestMicrophonePermission, openPrivacySettings, voiceStartRecording, voiceStopRecording } from '@/lib/tauri';
 import type { AudioDevice } from '@/lib/tauri';
 
 export const VoicePage: React.FC = () => {
@@ -25,12 +25,28 @@ export const VoicePage: React.FC = () => {
   const [testing, setTesting] = React.useState(false);
   const [audioDevices, setAudioDevices] = React.useState<AudioDevice[]>([]);
   const [micLevel, setMicLevel] = React.useState<number | null>(null);
+  const [permissionStatus, setPermissionStatus] = React.useState<'unknown' | 'granted' | 'denied'>('unknown');
+  const [requesting, setRequesting] = React.useState(false);
+  const [isTestRecording, setIsTestRecording] = React.useState(false);
+  const [testProcessing, setTestProcessing] = React.useState(false);
+  const [testResult, setTestResult] = React.useState<string | null>(null);
+  const [recordingSeconds, setRecordingSeconds] = React.useState(0);
 
-  useEffect(() => {
+  const refreshDevices = React.useCallback(() => {
     audioListDevices()
-      .then(setAudioDevices)
+      .then((devices) => {
+        setAudioDevices(devices);
+        // If we got more than just "Default", permission is likely granted
+        if (devices.length > 1) {
+          setPermissionStatus('granted');
+        }
+      })
       .catch((err) => console.error('Failed to list audio devices:', err));
   }, []);
+
+  useEffect(() => {
+    refreshDevices();
+  }, [refreshDevices]);
 
   const handleSettingChange = async (setting: string, value: unknown) => {
     try {
@@ -62,11 +78,78 @@ export const VoicePage: React.FC = () => {
   const handleDeviceChange = async (deviceName: string) => {
     try {
       await audioSetDevice(deviceName);
-      const devices = await audioListDevices();
-      setAudioDevices(devices);
+      refreshDevices();
       addToast({ type: 'success', title: t('voice.toasts.settingsSaved') });
     } catch (error) {
       addToast({ type: 'error', title: String(error) });
+    }
+  };
+
+  const handleRequestPermission = async () => {
+    setRequesting(true);
+    try {
+      const result = await requestMicrophonePermission();
+      if (result.granted) {
+        setPermissionStatus('granted');
+        refreshDevices();
+        addToast({ type: 'success', title: t('voice.permissionGranted') });
+      } else {
+        setPermissionStatus('denied');
+        addToast({ type: 'error', title: t('voice.permissionDenied') });
+      }
+    } catch (error) {
+      setPermissionStatus('denied');
+      addToast({ type: 'error', title: String(error) });
+    } finally {
+      setRequesting(false);
+    }
+  };
+
+  const handleOpenPrivacySettings = async () => {
+    try {
+      await openPrivacySettings('microphone');
+    } catch (error) {
+      addToast({ type: 'error', title: String(error) });
+    }
+  };
+
+  // Recording timer
+  useEffect(() => {
+    if (!isTestRecording) {
+      setRecordingSeconds(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setRecordingSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isTestRecording]);
+
+  const handleTestRecord = async () => {
+    if (isTestRecording) {
+      // Stop recording and transcribe
+      setIsTestRecording(false);
+      setTestProcessing(true);
+      try {
+        const result = await voiceStopRecording();
+        setTestResult(result.text || '(empty)');
+        addToast({ type: 'success', title: t('voice.toasts.transcriptionComplete') });
+      } catch (error) {
+        setTestResult(null);
+        addToast({ type: 'error', title: String(error) });
+      } finally {
+        setTestProcessing(false);
+      }
+    } else {
+      // Start recording
+      setTestResult(null);
+      try {
+        await voiceStartRecording();
+        setIsTestRecording(true);
+        addToast({ type: 'info', title: t('voice.toasts.recordingStarted') });
+      } catch (error) {
+        addToast({ type: 'error', title: String(error) });
+      }
     }
   };
 
@@ -89,12 +172,37 @@ export const VoicePage: React.FC = () => {
             </h2>
 
             <div className="space-y-4">
+              {/* Permission Request */}
+              {permissionStatus !== 'granted' && (
+                <div className="p-3 bg-warning/10 border border-warning/30 rounded-md">
+                  <p className="text-sm text-text-primary mb-3">
+                    {t('voice.noDevicesFound')}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleRequestPermission}
+                      disabled={requesting}
+                      className="flex-1"
+                    >
+                      {requesting ? t('common.loading') : t('voice.requestPermission')}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleOpenPrivacySettings}
+                      className="flex-1"
+                    >
+                      {t('voice.openPrivacySettings')}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Input Device Selector */}
               <div>
                 <label className="block text-sm text-text-secondary mb-2">
                   {t('voice.selectMicrophone')}
                 </label>
-                {audioDevices.length > 0 ? (
+                {audioDevices.length > 1 ? (
                   <select
                     value={audioDevices.find((d) => d.isSelected)?.name || ''}
                     onChange={(e) => handleDeviceChange(e.target.value)}
@@ -108,22 +216,21 @@ export const VoicePage: React.FC = () => {
                     ))}
                   </select>
                 ) : (
-                  <p className="text-sm text-text-tertiary">{t('voice.noDevicesFound')}</p>
+                  <p className="text-sm text-text-tertiary">
+                    {t('voice.selectMicrophoneDescription')}
+                  </p>
                 )}
-                <p className="text-xs text-text-tertiary mt-1">
-                  {t('voice.selectMicrophoneDescription')}
-                </p>
               </div>
 
-              {/* Test Microphone */}
+              {/* Mic Level Test */}
               <div>
                 <Button
                   variant="secondary"
                   onClick={handleTest}
-                  disabled={testing}
+                  disabled={testing || permissionStatus === 'denied'}
                   className="w-full"
                 >
-                  {testing ? t('common.loading') : t('voice.testRecording')}
+                  {testing ? t('common.loading') : t('voice.testMicLevel')}
                 </Button>
                 {micLevel !== null && (
                   <div className="mt-2">
@@ -141,8 +248,30 @@ export const VoicePage: React.FC = () => {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Full Recording Test */}
+              <div>
+                <Button
+                  variant={isTestRecording ? 'primary' : 'secondary'}
+                  onClick={handleTestRecord}
+                  disabled={testProcessing || permissionStatus === 'denied'}
+                  className="w-full"
+                >
+                  {testProcessing
+                    ? t('voice.transcribing')
+                    : isTestRecording
+                      ? `${t('voice.stopRecording')} (${recordingSeconds}s)`
+                      : t('voice.testRecording')}
+                </Button>
+                {testResult !== null && (
+                  <div className="mt-2 p-3 bg-bg-primary border border-border rounded-md">
+                    <p className="text-xs text-text-secondary mb-1">{t('voice.transcriptionResult')}</p>
+                    <p className="text-sm text-text-primary whitespace-pre-wrap">{testResult}</p>
+                  </div>
+                )}
                 <p className="text-xs text-text-tertiary mt-1 text-center">
-                  {t('voice.testDescription')}
+                  {t('voice.testRecordingDescription')}
                 </p>
               </div>
             </div>

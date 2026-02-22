@@ -44,7 +44,7 @@ export type KeyCode = typeof KEYCODES[number];
 
 export const DEFAULT_VOICE_SETTINGS = {
   triggerMode: 'toggle' as const,
-  voiceShortcut: 'F13',
+  voiceShortcut: 'Fn+Space',
   currentModel: 'parakeet-v3-cpu',
   language: 'auto',
   pasteMethod: 'clipboard' as const,
@@ -57,6 +57,7 @@ export const SUPPORTED_LANGUAGES = [
   { value: 'en', label: 'English' },
   { value: 'zh-CN', label: 'Chinese (Simplified)' },
   { value: 'zh-TW', label: 'Chinese (Traditional)' },
+  { value: 'yue', label: 'Cantonese (粤语)' },
   { value: 'ja', label: 'Japanese' },
   { value: 'ko', label: 'Korean' },
   { value: 'es', label: 'Spanish' },
@@ -85,22 +86,14 @@ export const AVAILABLE_MODELS = [
     url: 'https://blob.handy.computer/parakeet-tdt-0.6b-v3-int8.tar.gz',
   },
   {
-    id: 'parakeet-v2-cpu',
-    name: 'Parakeet V2 (CPU)',
-    size: 473 * 1024 * 1024, // ~473 MB
+    id: 'sense-voice-int8',
+    name: 'SenseVoice (CPU)',
+    size: 160 * 1024 * 1024, // ~160 MB
     type: 'cpu' as const,
-    languages: ['auto', 'en', 'zh-CN'],
-    speed: 4,
-    features: ['Auto-detect', 'CPU Optimized', 'x4 Realtime'],
-  },
-  {
-    id: 'whisper-small-gpu',
-    name: 'Whisper Small (GPU)',
-    size: 487 * 1024 * 1024, // ~487 MB
-    type: 'gpu' as const,
-    languages: ['en', 'zh-CN', 'es', 'fr', 'de', 'ja', 'ko'],
+    languages: ['auto', 'zh-CN', 'zh-TW', 'en', 'ja', 'ko', 'yue'],
     speed: 10,
-    features: ['Multi-language', 'GPU Required', 'x10 Realtime'],
+    features: ['CJK Optimized', 'CPU Optimized', 'x10 Realtime', 'ITN'],
+    url: 'https://blob.handy.computer/sense-voice-int8.tar.gz',
   },
 ] as const;
 

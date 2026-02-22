@@ -66,11 +66,19 @@
     "microphone": "Microphone",
     "selectMicrophone": "Input Device",
     "selectMicrophoneDescription": "Choose which microphone to use for voice input",
-    "noDevicesFound": "No audio input devices found",
+    "noDevicesFound": "No audio input devices found. Please grant microphone permission.",
+    "requestPermission": "Grant Microphone Access",
+    "openPrivacySettings": "Open System Settings",
+    "permissionGranted": "Microphone access granted",
+    "permissionDenied": "Microphone access denied — please enable in System Settings",
     "micLevel": "Audio Level: {{level}}%",
     "deviceDefault": "(System Default)",
-    "testRecording": "Test Recording",
-    "testDescription": "Press Voice Key or click to test",
+    "testMicLevel": "Test Mic Level",
+    "testRecording": "Start Test Recording",
+    "stopRecording": "Stop & Transcribe",
+    "transcribing": "Transcribing...",
+    "transcriptionResult": "Transcription Result:",
+    "testRecordingDescription": "Click to start recording, speak, then click again to stop and transcribe",
     "pasteMethod": "Paste Method",
     "pasteMethods": {
       "clipboard": "Clipboard",
@@ -118,7 +126,9 @@
       "autoDetect": "Auto-detect",
       "cpuOptimized": "CPU Optimized",
       "gpuRequired": "GPU Required",
-      "multiLanguage": "Multi-language"
+      "multiLanguage": "Multi-language",
+      "cjkOptimized": "CJK Optimized",
+      "itn": "Inverse Text Normalization"
     },
     "speed": "x{{speed}} Realtime",
     "lastUsed": "Last used {{time}}",
@@ -138,7 +148,7 @@
       "processing": "Processing",
       "error": "Error"
     },
-    "shortcut": "F13: Voice",
+    "shortcut": "Fn+Space: Voice",
     "keyboard": "Keyboard",
     "keyboardConnected": "Connected",
     "keyboardDisconnected": "Disconnected"
