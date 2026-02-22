@@ -1,0 +1,69 @@
+[package]
+name = "bossinput"
+version = "0.1.0"
+description = "Voice Input Keypad Software"
+authors = ["BOSSINPUT"]
+license = ""
+repository = ""
+edition = "2021"
+
+[lib]
+name = "bossinput_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+once_cell = "1"
+tauri = { version = "2.9.1", features = [
+  "macos-private-api",
+] }
+tauri-plugin-shell = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.40", features = ["full"] }
+
+# Audio & STT (matching Handy)
+cpal = "0.16.0"
+anyhow = "1.0.95"
+rubato = "0.16.2"
+log = "0.4.25"
+# Pin ort to rc.10 which is compatible with transcribe-rs 0.2.5
+ort = "=2.0.0-rc.10"
+transcribe-rs = { version = "0.2.5", features = ["parakeet"] }
+
+# Global hotkey & injection
+rdev = "0.5"
+
+# HID communication
+hidapi = { version = "2.6", features = ["linux-native"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# Platform-specific
+# Note: cocoa and objc are not needed when using arboard for clipboard
+# [target.'cfg(target_os = "macos")'.dependencies]
+# cocoa = "0.25"
+# objc = "0.2"
+
+# Cross-platform clipboard library
+arboard = "3.4"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.58", features = ["Win32_UI_Input_KeyboardAndMouse"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+# Use Handy's patched Tauri version for macOS compatibility
+[patch.crates-io]
+tauri-runtime = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.9.1" }
+tauri-runtime-wry = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.9.1" }
+tauri-utils = { git = "https://github.com/cjpais/tauri.git", branch = "handy-2.9.1" }

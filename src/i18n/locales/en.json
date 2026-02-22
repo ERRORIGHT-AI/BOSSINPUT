@@ -1,0 +1,237 @@
+{
+  "app": {
+    "name": "BOSSINPUT",
+    "tagline": "Voice Input Keypad Software"
+  },
+  "nav": {
+    "keyboard": "Keyboard",
+    "voice": "Voice Settings",
+    "models": "Models",
+    "logs": "Logs",
+    "settings": "Settings"
+  },
+  "keyboard": {
+    "title": "Keyboard Configuration",
+    "layer": "Layer",
+    "keyMappings": "Key Mappings",
+    "selectedKey": "Selected",
+    "layers": "Layers",
+    "actions": "Actions",
+    "importConfig": "Import Config...",
+    "exportConfig": "Export Config...",
+    "resetAll": "Reset All",
+    "addLayer": "Add Layer",
+    "keyConfig": {
+      "title": "Key Config",
+      "keycode": "Keycode",
+      "layer": "Layer",
+      "reset": "Reset",
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
+    "encoder": {
+      "title": "Encoder Configuration",
+      "actions": "Encoder Actions",
+      "rotateLeft": "Rotate Left",
+      "rotateRight": "Rotate Right",
+      "press": "Press",
+      "perAppConfig": "Per-Action Configurations",
+      "app": "App",
+      "addAppRule": "Add App Rule"
+    },
+    "toasts": {
+      "saved": "Configuration saved",
+      "imported": "Configuration imported",
+      "exported": "Configuration exported",
+      "reset": "Configuration reset to default"
+    }
+  },
+  "voice": {
+    "title": "Voice Settings",
+    "transcription": "Transcription",
+    "output": "Output",
+    "triggerMode": "Trigger Mode",
+    "mode": {
+      "toggle": "Toggle Mode",
+      "hold": "Hold to Talk"
+    },
+    "modeDescription": {
+      "toggle": "Press once to start, again to stop",
+      "hold": "Hold key to record, release to stop"
+    },
+    "voiceShortcut": "Voice Shortcut",
+    "voiceShortcutDescription": "Global shortcut to start recording",
+    "currentModel": "Current Model",
+    "language": "Language",
+    "testRecording": "Test Recording",
+    "testDescription": "Press Voice Key or click to test",
+    "pasteMethod": "Paste Method",
+    "pasteMethods": {
+      "clipboard": "Clipboard",
+      "direct": "Direct Input"
+    },
+    "pasteMethodDescription": {
+      "clipboard": "Most compatible across apps",
+      "direct": "Faster but may not work in all apps"
+    },
+    "autoPunctuation": "Auto-punctuation",
+    "autoPunctuationDescription": "Add punctuation automatically",
+    "showPreview": "Show preview",
+    "showPreviewDescription": "Brief flash of transcribed text",
+    "toasts": {
+      "recordingStarted": "Recording started",
+      "recordingStopped": "Recording stopped",
+      "transcriptionComplete": "Transcription complete",
+      "settingsSaved": "Voice settings saved",
+      "micTestSuccess": "Microphone test successful",
+      "micTestFailed": "Microphone test failed"
+    }
+  },
+  "models": {
+    "title": "Models",
+    "activeModel": "Active Model",
+    "availableModels": "Available Models",
+    "reload": "Reload Model",
+    "unload": "Unload",
+    "load": "Load",
+    "delete": "Delete",
+    "download": "Download {{size}}",
+    "cancelDownload": "Cancel",
+    "pauseDownload": "Pause",
+    "retryDownload": "Retry",
+    "addCustomModel": "Add Custom Model",
+    "customModelComingSoon": "Custom model support coming soon",
+    "status": {
+      "active": "Active",
+      "downloaded": "Downloaded",
+      "downloading": "Downloading...",
+      "not_downloaded": "Not downloaded",
+      "error": "Error"
+    },
+    "features": {
+      "autoDetect": "Auto-detect",
+      "cpuOptimized": "CPU Optimized",
+      "gpuRequired": "GPU Required",
+      "multiLanguage": "Multi-language"
+    },
+    "speed": "x{{speed}} Realtime",
+    "lastUsed": "Last used {{time}}",
+    "downloadProgress": "{{progress}}% • {{time}} remaining",
+    "toasts": {
+      "modelActivated": "{{model}} activated",
+      "modelDeleted": "{{model}} deleted",
+      "downloadStarted": "Downloading {{model}}",
+      "downloadComplete": "{{model}} download complete",
+      "downloadFailed": "{{model}} download failed"
+    }
+  },
+  "statusBar": {
+    "status": {
+      "ready": "Ready",
+      "recording": "Recording",
+      "processing": "Processing",
+      "error": "Error"
+    },
+    "shortcut": "F13: Voice",
+    "keyboard": "Keyboard",
+    "keyboardConnected": "Connected",
+    "keyboardDisconnected": "Disconnected"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to BOSSINPUT",
+      "subtitle": "Let's set up your voice keypad",
+      "getStarted": "Get Started"
+    },
+    "step1": {
+      "title": "Connect Your Keyboard",
+      "description": "Use a USB-C cable to connect your BOSSINPUT keypad",
+      "detecting": "Detecting keyboard...",
+      "detected": "Keyboard detected!",
+      "notDetected": "Keyboard not detected. Please check the connection."
+    },
+    "step2": {
+      "title": "Download Voice Model",
+      "description": "We need to download the Parakeet V3 model (~478 MB)",
+      "description2": "This enables offline voice transcription",
+      "startDownload": "Start Download",
+      "downloading": "Downloading...",
+      "complete": "Download complete!",
+      "timeRemaining": "{{time}} remaining"
+    },
+    "step3": {
+      "title": "System Permissions",
+      "description": "BOSSINPUT needs the following permissions:",
+      "microphone": {
+        "title": "Microphone",
+        "description": "Required for voice recording",
+        "button": "Open System Settings",
+        "granted": "Granted"
+      },
+      "accessibility": {
+        "title": "Accessibility",
+        "description": "Required for global hotkeys and text injection",
+        "button": "Open System Settings",
+        "granted": "Granted"
+      }
+    },
+    "step4": {
+      "title": "Test Voice Key",
+      "description": "Press the 🎤 key on your keypad, or click the button below",
+      "testRecord": "Test Record",
+      "yourVoice": "Your voice",
+      "testSuccess": "Test successful!",
+      "testFailed": "Test failed. Please try again."
+    },
+    "complete": {
+      "title": "Setup Complete",
+      "description": "Your BOSSINPUT is ready to use",
+      "quickStart": "Quick start:",
+      "quickStart1": "Press 🎤 key to start recording",
+      "quickStart2": "Speak your text",
+      "quickStart3": "Press 🎤 again to stop and paste",
+      "readyToUse": "Press F13 anytime to start voice input",
+      "startUsing": "Start Using BOSSINPUT"
+    },
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish"
+  },
+  "common": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No",
+    "retry": "Retry",
+    "copy": "Copy",
+    "paste": "Paste",
+    "select": "Select",
+    "clear": "Clear",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "add": "Add",
+    "remove": "Remove"
+  },
+  "errors": {
+    "keyboardNotConnected": "Keyboard not connected. Please check the connection.",
+    "keyboardLoadFailed": "Failed to load keyboard configuration.",
+    "keyboardSaveFailed": "Failed to save keyboard configuration.",
+    "voiceInitFailed": "Failed to initialize voice.",
+    "recordingStartFailed": "Failed to start recording.",
+    "recordingStopFailed": "Failed to stop recording.",
+    "modelDownloadFailed": "Failed to download model.",
+    "modelSetFailed": "Failed to set active model.",
+    "permissionDenied": "Permission denied. Please grant the required permissions.",
+    "networkError": "Network error. Please check your connection."
+  }
+}
