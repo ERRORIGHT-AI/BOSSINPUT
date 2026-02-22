@@ -7,7 +7,6 @@ import type {
   EncoderMapping,
 } from '@/types';
 import {
-  keyboardGetConfig,
   keyboardLoadConfig,
   keyboardSaveConfig,
   keyboardGetState,

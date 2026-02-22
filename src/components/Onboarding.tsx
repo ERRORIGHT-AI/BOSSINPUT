@@ -21,8 +21,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const { t } = useTranslation();
   const { completeOnboarding } = useAppStore();
   const { state: keyboardState, refreshState } = useKeyboardStore();
-  const { downloadModel, models, updateModelProgress, activeModelId, setActiveModel } = useModelStore();
-  const { startRecording, stopRecording, isRecording, status } = useVoiceStore();
+  const { downloadModel, models, setActiveModel } = useModelStore();
+  const { startRecording, stopRecording, isRecording } = useVoiceStore();
 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
   const [isDetecting, setIsDetecting] = useState(false);

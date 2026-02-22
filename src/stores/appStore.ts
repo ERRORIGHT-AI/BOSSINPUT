@@ -9,7 +9,7 @@ interface AppStore extends AppState {
   completeOnboarding: () => Promise<void>;
 }
 
-export const useAppStore = create<AppStore>((set, get) => ({
+export const useAppStore = create<AppStore>((set) => ({
   isOnboardingComplete: false,
   currentLocale: 'en',
   appVersion: '0.0.0',
@@ -28,6 +28,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
       });
     } catch (error) {
       console.error('Failed to initialize app:', error);
+      // If backend commands fail, skip onboarding so UI is not permanently blocked
+      set({
+        isOnboardingComplete: true,
+        currentLocale: navigator.language.startsWith('zh') ? 'zh-CN' : 'en',
+      });
     }
   },
 
@@ -37,7 +42,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   completeOnboarding: async () => {
-    await setOnboardingComplete();
+    try {
+      await setOnboardingComplete();
+    } catch (error) {
+      console.error('Failed to persist onboarding state:', error);
+    }
     set({ isOnboardingComplete: true });
   },
 }));

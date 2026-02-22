@@ -1,6 +1,4 @@
 import React, { useEffect } from 'react';
-import { useUIStore } from '@/stores';
-import { Button } from './Button';
 import { cn } from '@/lib/utils';
 
 export interface ModalProps {

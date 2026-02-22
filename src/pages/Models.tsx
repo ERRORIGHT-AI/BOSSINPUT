@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useModelStore } from '@/stores';
-import { useUIStore } from '@/stores';
 import { useT } from '@/i18n/hook';
 import { Button, Modal } from '@/components';
 import { cn } from '@/lib/utils';
@@ -11,7 +10,6 @@ export const ModelsPage: React.FC = () => {
     models,
     activeModelId,
     downloadQueue,
-    isLoading,
     error,
     init,
     setActiveModel,
@@ -21,7 +19,6 @@ export const ModelsPage: React.FC = () => {
     setError,
   } = useModelStore();
 
-  const { openModal } = useUIStore();
   const [customModelModal, setCustomModelModal] = React.useState(false);
 
   useEffect(() => {

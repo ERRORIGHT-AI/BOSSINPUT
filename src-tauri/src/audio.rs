@@ -12,6 +12,7 @@ const CHANNELS: u16 = 1; // Mono
 pub struct AudioManager {
     is_recording: Arc<Mutex<bool>>,
     audio_data: Arc<Mutex<Vec<f32>>>,
+    selected_device: Option<String>,
 }
 
 impl AudioManager {
@@ -19,12 +20,28 @@ impl AudioManager {
         Ok(Self {
             is_recording: Arc::new(Mutex::new(false)),
             audio_data: Arc::new(Mutex::new(Vec::new())),
+            selected_device: None,
         })
     }
 
-    /// Get the default audio input device
-    fn get_default_device() -> Result<Device, String> {
+    /// Get the input device — either user-selected or system default
+    fn get_input_device(&self) -> Result<Device, String> {
         let host = cpal::default_host();
+
+        if let Some(ref selected_name) = self.selected_device {
+            // Try to find the user-selected device by name
+            if let Ok(devices) = host.input_devices() {
+                for device in devices {
+                    if let Ok(name) = device.name() {
+                        if name == *selected_name {
+                            return Ok(device);
+                        }
+                    }
+                }
+            }
+            tracing::warn!("Selected device '{}' not found, falling back to default", selected_name);
+        }
+
         host.default_input_device()
             .ok_or_else(|| "No audio input device found".to_string())
     }
@@ -35,9 +52,64 @@ impl AudioManager {
             .map_err(|e| format!("Failed to get device config: {}", e))
     }
 
-    /// Start recording audio from the default input device
+    /// List all available audio input devices
+    pub fn list_input_devices(&self) -> Result<Vec<serde_json::Value>, String> {
+        let host = cpal::default_host();
+        let default_device_name = host
+            .default_input_device()
+            .and_then(|d| d.name().ok());
+
+        let devices = host
+            .input_devices()
+            .map_err(|e| format!("Failed to enumerate input devices: {}", e))?;
+
+        let mut result = Vec::new();
+        for device in devices {
+            if let Ok(name) = device.name() {
+                let is_default = default_device_name
+                    .as_ref()
+                    .map(|d| d == &name)
+                    .unwrap_or(false);
+                let is_selected = self.selected_device
+                    .as_ref()
+                    .map(|s| s == &name)
+                    .unwrap_or(is_default);
+
+                result.push(serde_json::json!({
+                    "name": name,
+                    "isDefault": is_default,
+                    "isSelected": is_selected,
+                }));
+            }
+        }
+
+        Ok(result)
+    }
+
+    /// Set the active input device by name
+    pub fn set_input_device(&mut self, device_name: String) -> Result<(), String> {
+        // Verify the device exists
+        let host = cpal::default_host();
+        let devices = host
+            .input_devices()
+            .map_err(|e| format!("Failed to enumerate devices: {}", e))?;
+
+        let found = devices
+            .into_iter()
+            .any(|d| d.name().map(|n| n == device_name).unwrap_or(false));
+
+        if !found {
+            return Err(format!("Device '{}' not found", device_name));
+        }
+
+        tracing::info!("Audio input device set to: {}", device_name);
+        self.selected_device = Some(device_name);
+        Ok(())
+    }
+
+    /// Start recording audio from the selected input device
     pub fn start_recording(&self) -> Result<(), String> {
-        let device = Self::get_default_device()?;
+        let device = self.get_input_device()?;
         let config = Self::get_device_config(&device)?;
 
         tracing::info!("Starting recording with config: {:?}", config);
@@ -101,15 +173,11 @@ impl AudioManager {
 
     /// Stop recording and return the captured audio data
     pub fn stop_recording(&self) -> Result<Vec<f32>, String> {
-        // In a real implementation, we'd properly stop the stream
-        // For now, we'll just return the captured data
         tracing::info!("Stopping recording");
 
-        // Clone the Arc for async access
         let audio_data = self.audio_data.clone();
         let is_recording = self.is_recording.clone();
 
-        // Use blocking task to get data from async mutex
         let data = tokio::runtime::Handle::try_current()
             .map(|handle| {
                 handle.block_on(async {
@@ -122,17 +190,60 @@ impl AudioManager {
         Ok(data)
     }
 
-    /// Test if microphone is working and return audio level
-    pub fn test_microphone(&self) -> Result<bool, String> {
-        let device = Self::get_default_device()?;
-
-        // Try to get device name as a basic test
-        let name = device.name()
+    /// Test if microphone is working, return JSON with success, level, and device name
+    pub fn test_microphone(&self) -> Result<serde_json::Value, String> {
+        let device = self.get_input_device()?;
+        let device_name = device.name()
             .map_err(|e| format!("Failed to get device name: {}", e))?;
 
-        tracing::info!("Microphone test: device found '{}'", name);
+        // Try to build an input stream to verify the device actually works
+        let config = Self::get_device_config(&device)?;
 
-        Ok(true)
+        // Record a short sample to measure audio level
+        let level_data: Arc<std::sync::Mutex<Vec<f32>>> = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let level_data_clone = level_data.clone();
+
+        let stream = device.build_input_stream(
+            &config.clone().into(),
+            move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                if let Ok(mut buf) = level_data_clone.lock() {
+                    // Keep only ~500ms worth of samples at the device's sample rate
+                    let max_samples = (config.sample_rate().0 / 2) as usize;
+                    if buf.len() < max_samples {
+                        buf.extend_from_slice(data);
+                    }
+                }
+            },
+            |err| {
+                tracing::error!("Mic test stream error: {}", err);
+            },
+            None,
+        ).map_err(|e| format!("Failed to build test stream: {}", e))?;
+
+        stream.play().map_err(|e| format!("Failed to play test stream: {}", e))?;
+
+        // Record for ~500ms
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        drop(stream);
+
+        // Compute RMS level
+        let samples = level_data.lock().unwrap();
+        let level = if samples.is_empty() {
+            0.0
+        } else {
+            let sum_sq: f32 = samples.iter().map(|s| s * s).sum();
+            let rms = (sum_sq / samples.len() as f32).sqrt();
+            // Normalize to 0-100 range (RMS of speech is typically 0.01-0.3)
+            (rms * 300.0).min(100.0)
+        };
+
+        tracing::info!("Microphone test: device='{}', level={:.1}", device_name, level);
+
+        Ok(serde_json::json!({
+            "success": true,
+            "level": level,
+            "deviceName": device_name,
+        }))
     }
 
     /// Check if currently recording

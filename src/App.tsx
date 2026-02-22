@@ -13,7 +13,6 @@ const pages: Record<Page, React.FC> = {
   voice: VoicePage,
   models: ModelsPage,
   logs: LogsPage,
-  // @ts-expect-error - settings page not implemented yet
   settings: () => null,
 };
 

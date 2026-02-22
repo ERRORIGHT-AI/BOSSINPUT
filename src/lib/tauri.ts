@@ -10,11 +10,9 @@ import type {
   KeyboardConfig,
   KeyboardState,
   VoiceSettings,
-  RecordingState,
   TranscriptionResult,
   VoiceStatus,
   VoiceModel,
-  ModelInfo,
   OnboardingState,
 } from '@/types';
 
@@ -173,6 +171,30 @@ export async function modelAddCustom(filepath: string): Promise<VoiceModel> {
 }
 
 // ============================================================
+// Audio Device Commands
+// ============================================================
+
+export interface AudioDevice {
+  name: string;
+  isDefault: boolean;
+  isSelected: boolean;
+}
+
+/**
+ * List all available audio input devices
+ */
+export async function audioListDevices(): Promise<AudioDevice[]> {
+  return invoke('audio_list_devices');
+}
+
+/**
+ * Set the active audio input device by name
+ */
+export async function audioSetDevice(deviceName: string): Promise<void> {
+  return invoke('audio_set_device', { deviceName });
+}
+
+// ============================================================
 // System Commands
 // ============================================================
 
@@ -211,7 +233,7 @@ export async function setOnboardingComplete(): Promise<void> {
 /**
  * Listen to keyboard state changes
  */
-export function onKeyboardStateChange(callback: (state: KeyboardState) => void) {
+export function onKeyboardStateChange(_callback: (state: KeyboardState) => void) {
   return invoke('plugin:keyboard|on_state_change').then((unlisten) => {
     // Setup listener
     return unlisten;
@@ -221,7 +243,7 @@ export function onKeyboardStateChange(callback: (state: KeyboardState) => void) 
 /**
  * Listen to voice state changes
  */
-export function onVoiceStateChange(callback: (status: VoiceStatus) => void) {
+export function onVoiceStateChange(_callback: (status: VoiceStatus) => void) {
   return invoke('plugin:voice|on_state_change').then((unlisten) => {
     // Setup listener
     return unlisten;
@@ -231,7 +253,7 @@ export function onVoiceStateChange(callback: (status: VoiceStatus) => void) {
 /**
  * Listen to model download progress updates
  */
-export function onModelDownloadProgress(callback: (progress: { modelId: string; progress: number }) => void) {
+export function onModelDownloadProgress(_callback: (progress: { modelId: string; progress: number }) => void) {
   return invoke('plugin:model|on_download_progress').then((unlisten) => {
     // Setup listener
     return unlisten;

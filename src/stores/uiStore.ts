@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { Page, ModalType, Theme, ToastNotification, StatusBarInfo } from '@/types';
-import { PAGES } from '@/lib/constants';
 
 interface UIStore {
   // Navigation

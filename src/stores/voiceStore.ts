@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import type {
   VoiceSettings,
   VoiceStatus,
-  RecordingState,
   TranscriptionResult,
 } from '@/types';
 import {

@@ -3,13 +3,6 @@ import { useUIStore } from '@/stores';
 import { useT } from '@/i18n/hook';
 import { cn } from '@/lib/utils';
 
-const statusColors = {
-  ready: 'text-success',
-  recording: 'text-error animate-pulse',
-  processing: 'text-warning',
-  error: 'text-error',
-};
-
 export const StatusBar: React.FC = () => {
   const { t } = useT();
   const { statusBarInfo } = useUIStore();

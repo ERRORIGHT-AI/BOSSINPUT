@@ -9,7 +9,7 @@ export const RecordingFloat: React.FC = () => {
   const [elapsed, setElapsed] = React.useState(0);
 
   React.useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isRecording) {
       setElapsed(0);
       interval = setInterval(() => {

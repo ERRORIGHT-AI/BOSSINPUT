@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { VoiceModel, ModelStatus } from '@/types';
+import type { VoiceModel } from '@/types';
 import {
   modelGetList,
   modelSetActive,
@@ -33,7 +33,9 @@ interface ModelStore {
 const initializeModels = (): VoiceModel[] => {
   return AVAILABLE_MODELS.map((model) => ({
     ...model,
-    status: 'not-downloaded',
+    languages: [...model.languages] as string[],
+    features: [...model.features] as string[],
+    status: 'not-downloaded' as const,
     downloadProgress: 0,
   }));
 };
@@ -48,12 +50,30 @@ export const useModelStore = create<ModelStore>((set, get) => ({
   init: async () => {
     set({ isLoading: true, error: null });
     try {
-      const [models, activeId] = await Promise.all([
+      const [backendModels, activeId] = await Promise.all([
         modelGetList(),
         modelGetActive(),
       ]);
 
-      set({ models, activeModelId: activeId, isLoading: false });
+      // Merge backend status into our model list based on AVAILABLE_MODELS
+      const defaultModels = initializeModels();
+      const mergedModels = defaultModels.map((model) => {
+        const backendMatch = backendModels.find((bm) => bm.id === model.id);
+        if (backendMatch) {
+          return {
+            ...model,
+            status: backendMatch.status || model.status,
+            downloadProgress: backendMatch.downloadProgress ?? model.downloadProgress,
+          };
+        }
+        return model;
+      });
+
+      set({
+        models: mergedModels,
+        activeModelId: activeId || 'parakeet-v3-cpu',
+        isLoading: false,
+      });
     } catch (error) {
       // If backend fails, use default models
       console.error('Failed to load models, using defaults:', error);
