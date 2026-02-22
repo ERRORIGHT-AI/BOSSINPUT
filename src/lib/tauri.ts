@@ -220,6 +220,38 @@ export async function audioSetDevice(deviceName: string): Promise<void> {
 }
 
 // ============================================================
+// Hotkey Commands
+// ============================================================
+
+/**
+ * Start global hotkey listener
+ */
+export async function hotkeyStartListening(): Promise<void> {
+  return invoke('hotkey_start_listening');
+}
+
+/**
+ * Stop global hotkey listener
+ */
+export async function hotkeyStopListening(): Promise<void> {
+  return invoke('hotkey_stop_listening');
+}
+
+/**
+ * Set the global shortcut for voice recording (e.g., "Fn+Space", "F13")
+ */
+export async function hotkeySetShortcut(shortcut: string): Promise<void> {
+  return invoke('hotkey_set_shortcut', { shortcut });
+}
+
+/**
+ * Check if currently recording via hotkey
+ */
+export async function hotkeyIsRecording(): Promise<boolean> {
+  return invoke('hotkey_is_recording');
+}
+
+// ============================================================
 // System Commands
 // ============================================================
 

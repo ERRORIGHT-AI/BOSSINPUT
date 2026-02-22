@@ -10,6 +10,8 @@ import {
   modelDelete,
 } from '@/lib/tauri';
 import { AVAILABLE_MODELS } from '@/lib/constants';
+import { useVoiceStore } from './voiceStore';
+import { useUIStore } from './uiStore';
 
 interface ModelStore {
   // State
@@ -99,6 +101,9 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     try {
       await modelSetActive(modelId);
 
+      // Get model name for display
+      const model = get().models.find((m) => m.id === modelId);
+
       // Update local state
       set((state) => ({
         activeModelId: modelId,
@@ -107,6 +112,18 @@ export const useModelStore = create<ModelStore>((set, get) => ({
           status: m.id === modelId ? 'active' : m.status === 'active' ? 'downloaded' : m.status,
         })),
       }));
+
+      // Sync to voiceStore (update currentModel)
+      const voiceStore = useVoiceStore.getState();
+      if (voiceStore.currentModel !== modelId) {
+        voiceStore.updateSettings({ currentModel: modelId }).catch(console.error);
+      }
+
+      // Sync to uiStore status bar
+      const uiStore = useUIStore.getState();
+      uiStore.updateStatusBarInfo({
+        currentModel: model?.name || modelId,
+      });
     } catch (error) {
       set({ error: `Failed to set active model: ${error}` });
       throw error;

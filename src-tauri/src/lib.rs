@@ -2,11 +2,13 @@
 
 mod audio;
 mod clipboard;
+mod hotkey;
 mod keyboard;
 mod stt;
 
 use audio::AudioManager;
 use clipboard::ClipboardManager;
+use hotkey::HotkeyManager;
 use keyboard::KeyboardManager;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -39,6 +41,7 @@ pub struct AppState {
     stt: Mutex<SttEngine>,
     keyboard: Mutex<KeyboardManager>,
     clipboard: Mutex<ClipboardManager>,
+    hotkey: Mutex<HotkeyManager>,
 }
 
 impl AppState {
@@ -441,6 +444,43 @@ async fn clipboard_paste(state: tauri::State<'_, AppState>) -> Result<(), String
         .paste()
 }
 
+// Hotkey Commands
+
+#[tauri::command]
+async fn hotkey_start_listening(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    state
+        .hotkey
+        .lock()
+        .map_err(|e| format!("Hotkey lock error: {}", e))?
+        .start_listening();
+    Ok(())
+}
+
+#[tauri::command]
+async fn hotkey_stop_listening(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    state
+        .hotkey
+        .lock()
+        .map_err(|e| format!("Hotkey lock error: {}", e))?
+        .stop_listening();
+    Ok(())
+}
+
+#[tauri::command]
+async fn hotkey_set_shortcut(shortcut: String, state: tauri::State<'_, AppState>) -> Result<(), String> {
+    state
+        .hotkey
+        .lock()
+        .map_err(|e| format!("Hotkey lock error: {}", e))?
+        .set_shortcut(&shortcut);
+    Ok(())
+}
+
+#[tauri::command]
+async fn hotkey_is_recording(state: tauri::State<'_, AppState>) -> Result<bool, String> {
+    Ok(state.hotkey.lock().map_err(|e| format!("Hotkey lock error: {}", e))?.is_recording())
+}
+
 pub fn run() {
     // Create dist directory for Tauri
     std::fs::create_dir_all("../dist").ok();
@@ -453,12 +493,18 @@ pub fn run() {
             let stt = SttEngine::new().expect("Failed to initialize STT engine");
             let keyboard = KeyboardManager::new().expect("Failed to initialize keyboard manager");
             let clipboard = ClipboardManager::new().expect("Failed to initialize clipboard manager");
+            let mut hotkey = HotkeyManager::try_new().expect("Failed to initialize hotkey manager");
+
+            // Set default shortcut and start listening
+            hotkey.set_shortcut("Fn+Space");
+            hotkey.start_listening();
 
             app.manage(AppState {
                 audio: Mutex::new(audio),
                 stt: Mutex::new(stt),
                 keyboard: Mutex::new(keyboard),
                 clipboard: Mutex::new(clipboard),
+                hotkey: Mutex::new(hotkey),
             });
 
             Ok(())
@@ -491,6 +537,10 @@ pub fn run() {
             clipboard_set_text,
             clipboard_get_text,
             clipboard_paste,
+            hotkey_start_listening,
+            hotkey_stop_listening,
+            hotkey_set_shortcut,
+            hotkey_is_recording,
             get_app_version,
             get_onboarding_state,
             set_onboarding_complete,
