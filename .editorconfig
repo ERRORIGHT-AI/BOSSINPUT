@@ -1,0 +1,61 @@
+# EditorConfig - https://editorconfig.org
+# Top-level EditorConfig file for BOSSINPUT
+
+root = true
+
+# Default charset
+charset = utf-8
+
+# Default indentation
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+# Line endings
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Max line length
+max_line_length = 100
+
+# TypeScript / JavaScript
+[*.{ts,tsx,js,jsx,mjs,cjs}]
+indent_size = 2
+
+# JSON
+[*.json]
+indent_size = 2
+
+# CSS / SCSS / Tailwind
+[*.{css,scss,sass,less}]
+indent_size = 2
+
+# HTML
+[*.html]
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# YAML
+[*.{yaml,yml}]
+indent_size = 2
+
+# Rust
+[*.rs]
+indent_size = 4
+
+# TOML
+[*.toml]
+indent_size = 4
+
+# Makefile
+[Makefile]
+indent_style = tab
+
+# Package.json (uses 2 spaces)
+[package.json]
+indent_size = 2
