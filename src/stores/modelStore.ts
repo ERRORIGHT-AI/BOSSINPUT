@@ -116,7 +116,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       // Sync to voiceStore (update currentModel)
       const voiceStore = useVoiceStore.getState();
       if (voiceStore.currentModel !== modelId) {
-        voiceStore.updateSettings({ currentModel: modelId }).catch(console.error);
+        voiceStore.updateModel(modelId);
       }
 
       // Sync to uiStore status bar

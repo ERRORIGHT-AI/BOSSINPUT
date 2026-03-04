@@ -32,6 +32,15 @@ export const VoicePage: React.FC = () => {
   const [testResult, setTestResult] = React.useState<string | null>(null);
   const [recordingSeconds, setRecordingSeconds] = React.useState(0);
 
+  // Shortcut recording state
+  const [isRecordingShortcut, setIsRecordingShortcut] = React.useState(false);
+  const [displayShortcut, setDisplayShortcut] = React.useState(voiceShortcut);
+
+  // Update display shortcut when voiceShortcut changes from store
+  useEffect(() => {
+    setDisplayShortcut(voiceShortcut);
+  }, [voiceShortcut]);
+
   const refreshDevices = React.useCallback(() => {
     audioListDevices()
       .then((devices) => {
@@ -47,6 +56,50 @@ export const VoicePage: React.FC = () => {
   useEffect(() => {
     refreshDevices();
   }, [refreshDevices]);
+
+  // Global keyboard listener for shortcut recording
+  useEffect(() => {
+    if (!isRecordingShortcut) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Escape cancels recording
+      if (e.key === 'Escape') {
+        setIsRecordingShortcut(false);
+        setDisplayShortcut(voiceShortcut);
+        return;
+      }
+
+      // Build the key combination
+      const keys: string[] = [];
+      if (e.metaKey) keys.push('Meta');
+      if (e.ctrlKey) keys.push('Control');
+      if (e.altKey) keys.push('Alt');
+      if (e.shiftKey) keys.push('Shift');
+
+      // Add the main key
+      let mainKey = e.key;
+      if (e.key === ' ') {
+        mainKey = 'Space';
+      } else if (e.key.length === 1) {
+        mainKey = e.key.toUpperCase();
+      }
+      keys.push(mainKey);
+
+      const shortcutString = keys.join('+');
+      setDisplayShortcut(shortcutString);
+
+      // Save the shortcut and stop recording
+      handleSettingChange('voiceShortcut', shortcutString).then(() => {
+        setIsRecordingShortcut(false);
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isRecordingShortcut, voiceShortcut]);
 
   const handleSettingChange = async (setting: string, value: unknown) => {
     try {
@@ -110,6 +163,16 @@ export const VoicePage: React.FC = () => {
       await openPrivacySettings('microphone');
     } catch (error) {
       addToast({ type: 'error', title: String(error) });
+    }
+  };
+
+  // Toggle shortcut recording mode
+  const toggleShortcutRecording = () => {
+    if (isRecordingShortcut) {
+      setIsRecordingShortcut(false);
+      setDisplayShortcut(voiceShortcut);
+    } else {
+      setIsRecordingShortcut(true);
     }
   };
 
@@ -310,14 +373,34 @@ export const VoicePage: React.FC = () => {
                 <label className="block text-sm text-text-secondary mb-2">
                   {t('voice.voiceShortcut')}
                 </label>
-                <input
-                  type="text"
-                  value={voiceShortcut}
-                  onChange={(e) => handleSettingChange('voiceShortcut', e.target.value)}
-                  className="w-full px-3 py-2 bg-bg-hover border border-border rounded-md text-sm text-text-primary focus:outline-none focus:border-accent"
-                />
+                <div className="flex items-center gap-2">
+                  <div className={`flex-1 px-3 py-2 bg-bg-hover border rounded-md text-sm ${
+                    isRecordingShortcut
+                      ? 'border-accent ring-2 ring-accent ring-opacity-50 text-accent'
+                      : 'border-border text-text-primary'
+                  }`}>
+                    {isRecordingShortcut ? (
+                      <span className="animate-pulse">Press keys... (Esc to cancel)</span>
+                    ) : (
+                      <span>{displayShortcut || t('voice.voiceShortcutDescription')}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={toggleShortcutRecording}
+                    className={`px-3 py-2 border rounded-md text-sm transition-colors ${
+                      isRecordingShortcut
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-bg-hover border-border text-text-secondary hover:text-text-primary hover:border-accent'
+                    }`}
+                  >
+                    {isRecordingShortcut ? '✕' : '⌨'}
+                  </button>
+                </div>
                 <p className="text-xs text-text-tertiary mt-1">
-                  {t('voice.voiceShortcutDescription')}
+                  {isRecordingShortcut
+                    ? 'Press your shortcut combination (e.g., Space, F13, Cmd+Option+V)'
+                    : t('voice.voiceShortcutDescription')
+                  }
                 </p>
               </div>
 

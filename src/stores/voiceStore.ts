@@ -11,7 +11,6 @@ import {
   voiceGetSettings,
   voiceUpdateSettings,
   voiceTestMicrophone,
-  hotkeyIsRecording,
   hotkeySetShortcut,
 } from '@/lib/tauri';
 import { DEFAULT_VOICE_SETTINGS } from '@/lib/constants';
@@ -23,20 +22,16 @@ interface VoiceStore extends VoiceSettings {
   isRecording: boolean;
   error: string | null;
 
-  // Hotkey polling
-  hotkeyCheckInterval: number | null;
-
   // Actions
   init: () => Promise<void>;
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<TranscriptionResult>;
   updateSettings: (settings: Partial<VoiceSettings>) => Promise<void>;
+  updateModel: (modelId: string) => void;
   testMicrophone: () => Promise<{ success: boolean; level: number }>;
   refreshStatus: () => Promise<void>;
   clearError: () => void;
   setError: (error: string) => void;
-  startHotkeyPolling: () => void;
-  stopHotkeyPolling: () => void;
 }
 
 export const useVoiceStore = create<VoiceStore>((set, get) => ({
@@ -58,7 +53,6 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
   transcriptionHistory: [],
   isRecording: false,
   error: null,
-  hotkeyCheckInterval: null,
 
   init: async () => {
     try {
@@ -68,9 +62,6 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
       ]);
 
       set({ ...settings, status });
-
-      // Start polling hotkey recording state
-      get().startHotkeyPolling();
 
       // Set initial shortcut in backend
       try {
@@ -82,7 +73,6 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
       console.error('Failed to initialize voice:', error);
       // Use defaults if failed
       set({ ...DEFAULT_VOICE_SETTINGS });
-      get().startHotkeyPolling();
     }
   },
 
@@ -143,6 +133,10 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
     }
   },
 
+  updateModel: (modelId: string) => {
+    set({ currentModel: modelId });
+  },
+
   testMicrophone: async () => {
     try {
       return await voiceTestMicrophone();
@@ -167,64 +161,5 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
 
   setError: (error: string) => {
     set({ error });
-  },
-
-  startHotkeyPolling: () => {
-    const { stopHotkeyPolling } = get();
-    stopHotkeyPolling();
-
-    const interval = setInterval(async () => {
-      try {
-        const isRecording = await hotkeyIsRecording();
-        const { isRecording: currentRecording } = get();
-
-        // State changed
-        if (isRecording !== currentRecording) {
-          if (isRecording) {
-            // Hotkey started recording
-            set({
-              isRecording: true,
-              status: { state: 'recording', modelLoaded: get().status.modelLoaded, lastTranscription: null },
-            });
-          } else {
-            // Hotkey stopped recording - need to fetch the transcription result
-            set({
-              isRecording: false,
-              status: { state: 'processing', modelLoaded: get().status.modelLoaded, lastTranscription: null },
-            });
-
-            // Get the transcription result
-            try {
-              const result = await voiceStopRecording();
-              set({
-                status: {
-                  state: 'idle',
-                  modelLoaded: get().status.modelLoaded,
-                  lastTranscription: result.text,
-                },
-                transcriptionHistory: [result, ...get().transcriptionHistory.slice(0, 99)],
-              });
-            } catch (error) {
-              set({
-                status: { state: 'idle', modelLoaded: get().status.modelLoaded, lastTranscription: null },
-                error: `Recording failed: ${error}`,
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Hotkey poll error:', error);
-      }
-    }, 200); // Check every 200ms
-
-    set({ hotkeyCheckInterval: interval as unknown as number });
-  },
-
-  stopHotkeyPolling: () => {
-    const { hotkeyCheckInterval } = get();
-    if (hotkeyCheckInterval) {
-      clearInterval(hotkeyCheckInterval as number);
-      set({ hotkeyCheckInterval: null });
-    }
   },
 }));

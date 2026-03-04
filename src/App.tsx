@@ -4,6 +4,7 @@ import { StatusBar } from './components/StatusBar';
 import { ToastContainer, Onboarding, ErrorBoundary } from './components';
 import { useUIStore } from './stores';
 import { useAppStore } from './stores';
+import { useGlobalHotkey } from './hooks';
 import { KeyboardPage, VoicePage, ModelsPage, LogsPage } from './pages';
 import type { Page } from './types';
 import './styles/index.css';
@@ -21,6 +22,9 @@ function AppContent() {
   const { init: initApp, isOnboardingComplete } = useAppStore();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Enable global hotkey listener
+  useGlobalHotkey(isInitialized);
 
   useEffect(() => {
     initApp().then(() => {

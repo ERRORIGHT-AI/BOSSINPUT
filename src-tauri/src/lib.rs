@@ -447,26 +447,6 @@ async fn clipboard_paste(state: tauri::State<'_, AppState>) -> Result<(), String
 // Hotkey Commands
 
 #[tauri::command]
-async fn hotkey_start_listening(state: tauri::State<'_, AppState>) -> Result<(), String> {
-    state
-        .hotkey
-        .lock()
-        .map_err(|e| format!("Hotkey lock error: {}", e))?
-        .start_listening();
-    Ok(())
-}
-
-#[tauri::command]
-async fn hotkey_stop_listening(state: tauri::State<'_, AppState>) -> Result<(), String> {
-    state
-        .hotkey
-        .lock()
-        .map_err(|e| format!("Hotkey lock error: {}", e))?
-        .stop_listening();
-    Ok(())
-}
-
-#[tauri::command]
 async fn hotkey_set_shortcut(shortcut: String, state: tauri::State<'_, AppState>) -> Result<(), String> {
     state
         .hotkey
@@ -481,32 +461,48 @@ async fn hotkey_is_recording(state: tauri::State<'_, AppState>) -> Result<bool, 
     Ok(state.hotkey.lock().map_err(|e| format!("Hotkey lock error: {}", e))?.is_recording())
 }
 
+#[tauri::command]
+async fn hotkey_toggle_recording(state: tauri::State<'_, AppState>) -> Result<bool, String> {
+    let recording = state.hotkey.lock()
+        .map_err(|e| format!("Hotkey lock error: {}", e))?
+        .toggle_recording();
+    Ok(recording)
+}
+
+#[tauri::command]
+async fn hotkey_get_shortcut(state: tauri::State<'_, AppState>) -> Result<String, String> {
+    Ok(state.hotkey.lock()
+        .map_err(|e| format!("Hotkey lock error: {}", e))?
+        .get_shortcut()
+        .to_string())
+}
+
 pub fn run() {
     // Create dist directory for Tauri
     std::fs::create_dir_all("../dist").ok();
 
+    eprintln!("[BOSSINPUT] Creating builder...");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            // Initialize app state in the setup handler, which runs after NSApp is fully initialized
-            let audio = AudioManager::new().expect("Failed to initialize audio manager");
-            let stt = SttEngine::new().expect("Failed to initialize STT engine");
-            let keyboard = KeyboardManager::new().expect("Failed to initialize keyboard manager");
-            let clipboard = ClipboardManager::new().expect("Failed to initialize clipboard manager");
-            let mut hotkey = HotkeyManager::try_new().expect("Failed to initialize hotkey manager");
+            eprintln!("[BOSSINPUT] Starting setup...");
 
-            // Set default shortcut and start listening
-            hotkey.set_shortcut("Fn+Space");
-            hotkey.start_listening();
+            // Minimal setup - just initialize the bare minimum
+            let audio = Mutex::new(AudioManager::new()?);
+            let stt = Mutex::new(SttEngine::new()?);
+            let keyboard = Mutex::new(KeyboardManager::new()?);
+            let clipboard = Mutex::new(ClipboardManager::new()?);
+            let hotkey = Mutex::new(HotkeyManager::try_new()?);
 
             app.manage(AppState {
-                audio: Mutex::new(audio),
-                stt: Mutex::new(stt),
-                keyboard: Mutex::new(keyboard),
-                clipboard: Mutex::new(clipboard),
-                hotkey: Mutex::new(hotkey),
+                audio,
+                stt,
+                keyboard,
+                clipboard,
+                hotkey,
             });
 
+            eprintln!("[BOSSINPUT] Setup complete!");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -537,10 +533,10 @@ pub fn run() {
             clipboard_set_text,
             clipboard_get_text,
             clipboard_paste,
-            hotkey_start_listening,
-            hotkey_stop_listening,
             hotkey_set_shortcut,
             hotkey_is_recording,
+            hotkey_toggle_recording,
+            hotkey_get_shortcut,
             get_app_version,
             get_onboarding_state,
             set_onboarding_complete,
