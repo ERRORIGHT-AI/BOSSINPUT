@@ -45,9 +45,18 @@ function AppContent() {
   if (!isInitialized) {
     return (
       <div className="flex items-center justify-center h-screen bg-bg-primary">
-        <div className="text-center">
-          <div className="text-4xl mb-4 animate-pulse">⌨️</div>
-          <p className="text-text-secondary">Loading BOSSINPUT...</p>
+        <div className="flex flex-col items-center justify-center space-y-6">
+          <div className="relative flex items-center justify-center w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-4 border-bg-secondary" />
+            <div className="absolute inset-0 rounded-full border-4 border-accent border-t-transparent animate-spin" />
+            <span className="text-xl animate-pulse">🎤</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-base font-medium tracking-widest text-text-primary uppercase opacity-90">
+              Initializing
+            </p>
+            <p className="text-xs text-text-tertiary">Building your workspace...</p>
+          </div>
         </div>
       </div>
     );

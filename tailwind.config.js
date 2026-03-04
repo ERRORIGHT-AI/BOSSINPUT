@@ -8,7 +8,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Dark theme (default)
         bg: {
           primary: 'var(--color-bg-primary)',
           secondary: 'var(--color-bg-secondary)',
@@ -18,23 +17,32 @@ export default {
         },
         border: {
           default: 'var(--color-border)',
+          focus: 'var(--color-border-focus)',
         },
         text: {
           primary: 'var(--color-text-primary)',
           secondary: 'var(--color-text-secondary)',
+          tertiary: 'var(--color-text-tertiary)',
         },
-        // Semantic colors (same for both themes)
-        accent: '#007acc',
-        success: '#4ec9b0',
-        warning: '#dcdcaa',
-        error: '#f48771',
+        // Semantic colors
+        accent: 'var(--color-accent)',
+        accentHover: 'var(--color-accent-hover)',
+        success: '#10b981',
+        warning: '#f59e0b',
+        error: '#ef4444',
       },
       fontFamily: {
         sans: [
           '-apple-system',
           'BlinkMacSystemFont',
           '"Segoe UI"',
+          'Roboto',
+          'Helvetica',
+          'Arial',
           'sans-serif',
+          '"Apple Color Emoji"',
+          '"Segoe UI Emoji"',
+          '"Segoe UI Symbol"',
         ],
       },
       fontSize: {
@@ -53,19 +61,35 @@ export default {
         xl: '32px',
       },
       borderRadius: {
-        sm: '4px',
-        md: '8px',
-        lg: '12px',
+        sm: '6px',
+        md: '10px',
+        lg: '16px',
+        xl: '24px',
       },
       animation: {
         'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin-slow': 'spin 2s linear infinite',
         'progress': 'progress 1.5s ease-in-out infinite',
-        keyframes: {
-          progress: {
-            '0%': { transform: 'translateX(-100%)' },
-            '100%': { transform: 'translateX(100%)' },
-          },
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'slide-up': 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'scale-in': 'scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+      keyframes: {
+        progress: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        fadeIn: {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        slideUp: {
+          from: { opacity: '0', transform: 'translateY(10px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        scaleIn: {
+          from: { opacity: '0', transform: 'scale(0.95)' },
+          to: { opacity: '1', transform: 'scale(1)' },
         },
       },
     },

@@ -42,21 +42,21 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         className={cn(
-          'relative w-full bg-bg-secondary rounded-lg shadow-2xl border border-border',
-          'flex flex-col max-h-[90vh]',
+          'relative w-full bg-bg-secondary rounded-xl shadow-2xl shadow-black/50 border border-border',
+          'flex flex-col max-h-[90vh] animate-scale-in',
           sizeStyles[size]
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
+          <h2 className="text-lg font-semibold text-text-primary tracking-tight">{title}</h2>
           <button
             onClick={onClose}
             className="text-text-secondary hover:text-text-primary transition-colors"

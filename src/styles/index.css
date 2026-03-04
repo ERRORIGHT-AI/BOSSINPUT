@@ -14,17 +14,19 @@
 
   /* Border color → border-border */
   --color-border: var(--theme-border);
+  --color-border-focus: var(--theme-border-focus);
 
   /* Text colors → text-text-primary, text-text-secondary, text-text-tertiary */
   --color-text-primary: var(--theme-text-primary);
   --color-text-secondary: var(--theme-text-secondary);
   --color-text-tertiary: var(--theme-text-tertiary);
 
-  /* Semantic colors (same for both themes) */
-  --color-accent: #007acc;
-  --color-success: #4ec9b0;
-  --color-warning: #dcdcaa;
-  --color-error: #f48771;
+  /* Semantic colors */
+  --color-accent: var(--theme-accent);
+  --color-accent-hover: var(--theme-accent-hover);
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
 
   /* Font sizes */
   --font-size-xs: 11px;
@@ -38,58 +40,46 @@
   --font-size-6xl: 48px;
 
   /* Font family */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-
-  /* Animation */
-  --animate-progress: progress 1.5s ease-in-out infinite;
-  --animate-slideUp: slideUp 0.3s ease-out;
-  --animate-slideIn: slideIn 0.3s ease-out;
-}
-
-@keyframes progress {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(100%); }
-  to { opacity: 1; transform: translateX(0); }
 }
 
 /* ============================================================
-   Dark Theme (default)
+   Dark Theme (default) - Black & Purple Aesthetics
    ============================================================ */
 :root {
-  --theme-bg-primary: #1e1e1e;
-  --theme-bg-secondary: #252526;
-  --theme-bg-sidebar: #1a1a1a;
-  --theme-bg-hover: #2a2d2e;
-  --theme-bg-selected: #37373d;
-  --theme-border: #333333;
-  --theme-text-primary: #cccccc;
-  --theme-text-secondary: #858585;
-  --theme-text-tertiary: #5a5a5a;
+  /* Deep black backgrounds with subtle purple hues */
+  --theme-bg-primary: #09090b;   /* Almost pure black */
+  --theme-bg-secondary: #121016; /* Very dark purple/black */
+  --theme-bg-sidebar: #0f0c13;   /* Distinct deep sidebar */
+  --theme-bg-hover: #1e1a24;     /* Lighter interaction surface */
+  --theme-bg-selected: #2a2039;  /* Prominent selection shade */
+  --theme-border: #231d2c;
+  --theme-border-focus: #5b41ab;
+  --theme-text-primary: #f8f6fc;
+  --theme-text-secondary: #a39bb8;
+  --theme-text-tertiary: #686378;
+  /* Purple accents */
+  --theme-accent: #8b5cf6;       /* Standard vibrant purple */
+  --theme-accent-hover: #a78bfa;
 }
 
 /* ============================================================
-   Light Theme
+   Light Theme - Clean White with Purple Accents
    ============================================================ */
 .light {
   --theme-bg-primary: #ffffff;
-  --theme-bg-secondary: #f3f3f3;
-  --theme-bg-sidebar: #f0f0f0;
-  --theme-bg-hover: #e8e8e8;
-  --theme-bg-selected: #d4d4d4;
-  --theme-border: #d4d4d4;
-  --theme-text-primary: #333333;
-  --theme-text-secondary: #666666;
-  --theme-text-tertiary: #999999;
+  --theme-bg-secondary: #f9f8fa;
+  --theme-bg-sidebar: #fdfcff;
+  --theme-bg-hover: #f1f0f5;
+  --theme-bg-selected: #ede9f4;
+  --theme-border: #e6e4eb;
+  --theme-border-focus: #8b5cf6;
+  --theme-text-primary: #18161d;
+  --theme-text-secondary: #5e5a6a;
+  --theme-text-tertiary: #928f9d;
+  --theme-accent: #7c3aed;
+  --theme-accent-hover: #6d28d9;
 }
 
 /* ============================================================
@@ -102,12 +92,12 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--theme-bg-primary);
   color: var(--theme-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -118,19 +108,20 @@ body {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--theme-bg-secondary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--theme-bg-selected);
-  border-radius: 5px;
+  background: var(--theme-border);
+  border-radius: 4px;
+  border: 2px solid var(--theme-bg-primary); /* creates a padding effect */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--theme-text-secondary);
+  background: var(--theme-text-tertiary);
 }

@@ -86,13 +86,16 @@ export const ModelsPage: React.FC = () => {
 
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Active Model */}
-          <div className="p-4 bg-bg-secondary rounded-lg border border-border">
-            <h2 className="text-sm font-semibold text-text-secondary mb-4">
+          <div className="relative p-5 rounded-2xl bg-bg-secondary border border-border/50 shadow-sm overflow-hidden">
+            {/* Background glow effect */}
+            <div className="absolute top-0 right-0 -m-8 w-32 h-32 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+            
+            <h2 className="text-sm font-medium text-text-tertiary mb-4 uppercase tracking-wider">
               {t('models.activeModel')}
             </h2>
 
             {activeModel ? (
-              <div className="p-4 bg-bg-selected border border-accent rounded-md">
+              <div className="p-5 bg-bg-primary/50 border border-accent/30 rounded-xl shadow-[0_0_15px_var(--theme-accent)_inset] backdrop-blur-sm">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-base font-semibold text-text-primary">
                     {activeModel.name} ●
@@ -113,9 +116,9 @@ export const ModelsPage: React.FC = () => {
           </div>
 
           {/* Available Models */}
-          <div className="p-4 bg-bg-secondary rounded-lg border border-border">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-text-secondary">
+          <div className="p-5 bg-bg-secondary rounded-2xl border border-border/50 shadow-sm relative overflow-hidden">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-sm font-medium text-text-tertiary uppercase tracking-wider">
                 {t('models.availableModels')}
               </h2>
               <Button variant="secondary" onClick={handleAddCustom}>
@@ -133,10 +136,11 @@ export const ModelsPage: React.FC = () => {
                   <div
                     key={model.id}
                     className={cn(
-                      'p-4 rounded-md border transition-colors',
+                      'p-5 rounded-xl border transition-all duration-300',
+                      'hover:-translate-y-1 hover:shadow-lg',
                       model.status === 'error'
-                        ? 'border-error bg-error/10'
-                        : 'border-border bg-bg-hover'
+                        ? 'border-error/50 bg-error/5 hover:shadow-error/10'
+                        : 'border-border/50 bg-bg-primary hover:border-border-focus hover:shadow-accent/5'
                     )}
                   >
                     <div className="flex items-start justify-between mb-2">
@@ -157,16 +161,20 @@ export const ModelsPage: React.FC = () => {
 
                     {/* Download Progress */}
                     {isDownloading && (
-                      <div className="mb-3">
-                        <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden">
+                      <div className="mb-4 mt-2">
+                        <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border/50">
                           <div
-                            className="h-full bg-accent transition-all duration-300"
+                            className="h-full bg-accent relative transition-all duration-300 ease-out"
                             style={{ width: `${model.downloadProgress}%` }}
-                          />
+                          >
+                            {/* Shimmer effect inside progress bar */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[progress_1.5s_ease-in-out_infinite]" />
+                          </div>
                         </div>
-                        <p className="text-xs text-text-tertiary mt-1">
-                          {model.downloadProgress}%
-                        </p>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-xs text-accent font-medium">{t('common.downloading')}</span>
+                          <span className="text-xs text-text-tertiary font-mono">{model.downloadProgress}%</span>
+                        </div>
                       </div>
                     )}
 
